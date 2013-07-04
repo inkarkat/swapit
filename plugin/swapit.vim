@@ -285,29 +285,31 @@ fun! SwapMatch(swap_list, cur_word, direction, is_visual)
             return 0
         endif
 
-        exec "norm T<ma%"
+        norm! T<ma
+        norm %
 
         "If the cursor is on a / then jump to the front and mark
 
         if getline(".")[col(".") -1] != "/"
-            exec "norm ma%"
+            norm! ma
+            norm %
         endif
 
-        exec "norm lviw\"sp`aviw\"sp"
+        exec "norm! lviw\"spg`aviw\"sp"
     " Regular swaps {{{3
     else
 
         if a:is_visual == 'yes'
             if next_word =~ '\W'
                 let in_visual = 1
-                exec 'norm! gv"sp`[v`]'
+                exec 'norm! gv"spg`[vg`]' . (&selection ==# 'exclusive' ? 'l' : '')
             else
                 exec 'norm! gv"spg`['
             endif
         else
             if next_word =~ '\W'
                 let in_visual = 1
-                exec 'norm! maviw"sp`[v`]'
+                exec 'norm! maviw"spg`[vg`]' . (&selection ==# 'exclusive' ? 'l' : '')
             else
                 exec 'norm! maviw"spg`a'
             endif
