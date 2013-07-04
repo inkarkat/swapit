@@ -302,14 +302,14 @@ fun! SwapMatch(swap_list, cur_word, direction, is_visual)
                 let in_visual = 1
                 exec 'norm! gv"sp`[v`]'
             else
-                exec 'norm! gv"spb'
+                exec 'norm! gv"spg`['
             endif
         else
             if next_word =~ '\W'
                 let in_visual = 1
                 exec 'norm! maviw"sp`[v`]'
             else
-                exec 'norm! maviw"spb`a'
+                exec 'norm! maviw"spg`a'
             endif
         endif
     endif
