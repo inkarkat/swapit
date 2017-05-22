@@ -128,12 +128,12 @@
 "               languages to package with the script
 "
 "Variable Initialization {{{1
-"if exists('g:loaded_swapit')
-"    finish
-"elseif v:version < 700
+if exists('g:loaded_swapit')
+    finish
+elseif v:version < 700
 "    echomsg "SwapIt plugin requires Vim version 7 or later"
-"    finish
-"endif
+    finish
+endif
 let g:loaded_swapit = 1
 
 if !exists('g:swap_list_dont_append')
