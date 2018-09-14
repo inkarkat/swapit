@@ -135,6 +135,17 @@ Contents                                                     *swapit-contents*
 
             :SwapList roman I II III IV V VI VII VII IX X
 <
+                                     *:SwapListLowerCase* *:SwapListUpperCase*
+                                     *:SwapListTitleCase* *:SwapListSmartCase*
+        Often, you want to define swaps for different case variations (e.g.
+        both hello and Hello. To do that easily, you can use the following
+        command variants:
+
+        :SwapListLowerCase  add lowercase variant
+        :SwapListUpperCase  add UPPERCASE VARIANT
+        :SwapListTitleCase  add Title-Case Variant
+        :SwapListSmartCase  add lower, UPPER, and Title-Case
+
 
     3.3 xml/html swaps                         *:SwapXmlMatchit* *swapit-html*
 
