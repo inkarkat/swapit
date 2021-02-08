@@ -168,7 +168,11 @@ vnoremap <silent><c-x> :<c-u>let swap_count = v:count<Bar>call SwapWord(<SID>Get
 "inoremap <expr> <c-b> SwapInsert()
 
 " For adding lists
-com! -nargs=* SwapList call AddSwapList(<q-args>)
+com! -nargs=* SwapList call AddSwapList('SwapList', {}, <q-args>)
+com! -nargs=* SwapListLowerCase call AddSwapList('SwapListLowerCase', {'case': 'lower'}, <q-args>)
+com! -nargs=* SwapListUpperCase call AddSwapList('SwapListUpperCase', {'case': 'upper'}, <q-args>)
+com! -nargs=* SwapListTitleCase call AddSwapList('SwapListTitleCase', {'case': 'title'}, <q-args>)
+com! -nargs=* SwapListSmartCase call AddSwapList('SwapListSmartCase', {'case': 'smart'}, <q-args>)
 com! -bar ClearSwapList let b:swap_lists = []
 com! -bar SwapIdea call OpenSwapFileType()
 com! -range -nargs=1 SwapWordVisual call SwapWord(getline('.'), 1, <f-args>,'yes')
@@ -189,8 +193,8 @@ fun! s:GetSelection()
     return selection
 endfun
 
-" <SID>GetLists() accessor for swap lists {{{2
-fun! s:GetLists()
+" <SID>GetListsFromScope() accessor for raw list(s) from current scope {{{2
+fun! s:GetListsFromScope()
     if g:swap_list_dont_append == 'yes'
         return exists('b:swap_lists') ? b:swap_lists : []
     elseif exists('b:swap_lists')
@@ -205,6 +209,44 @@ fun! s:GetLists()
     else
         return g:default_swap_list
     endif
+endfun
+
+" <SID>GetLists() accessor for swap lists {{{2
+fun! s:GetLists()
+    let lists = []
+    for list in s:GetListsFromScope()
+        call add(lists, list)
+
+        let case_option = get(list, 'case', '')
+        if case_option == 'smart'
+            let transformers = [function('tolower'), function('toupper'), function('s:totitle')]
+        elseif !empty(case_option)
+            let transformers = [function((exists('+to' . case_option) ? 'to' : 's:to') . case_option)]
+        else
+            let transformers = []
+        endif
+        for Transformer in transformers
+            let transformed_list = s:Transform(list, Transformer)
+            if ! empty(transformed_list)
+                call add(lists, transformed_list)
+            endif
+        endfor
+    endfor
+    return lists
+endfunction
+
+" <SID>Transform() change a list {{{2
+fun! s:Transform(list, Transformer)
+    let copy = deepcopy(a:list)
+    let copy.name = call(a:Transformer, [copy.name])
+    call map(copy.options, 'call(a:Transformer, [v:val])')
+
+    return (copy.options ==# a:list.options ? {} : copy)
+endfun
+
+" <SID>totitle() convert string to Title Case {{{2
+fun! s:totitle(expr)
+    return substitute(a:expr, '\<\a', '\=toupper(submatch(0))', 'g')
 endfun
 
 "SwapWord() main processiong event function {{{2
@@ -427,19 +469,20 @@ endfun
 "List Maintenance Functions {{{1
 "AddSwapList()  Main Definition Function {{{2
 "use with after/ftplugin/ vim files to set up file type swap lists
-fun! AddSwapList(s_list)
+fun! AddSwapList(command_name, config_template, s_list)
 
     let word_list = split(a:s_list,'\s\+')
 
     if len(word_list) < 3
-        echo "Usage :SwapList <list_name> <member1> <member2> .. <membern>"
+        echo printf("Usage :%s <list_name> <member1> <member2> .. <membern>", a:command_name)
         return 1
     endif
 
     let list_name = remove (word_list,0)
 
     if !exists('b:swap_lists') | let b:swap_lists = [] | endif
-    call add(b:swap_lists,{'name':list_name, 'options':word_list})
+    let config = extend(a:config_template, {'name':list_name, 'options':word_list})
+    call add(b:swap_lists,config)
 endfun
 
 fun! AddSwapXmlMatchit(s_list)
@@ -465,15 +508,11 @@ if g:swap_list_dont_append == 'yes'
 
 else
     let g:default_swap_list = [
-                \{'name':'yes/no', 'options': ['yes','no']},
-                \{'name':'Yes/No', 'options': ['Yes','No']},
-                \{'name':'True/False', 'options': ['True','False']},
-                \{'name':'true/false', 'options': ['true','false']},
-                \{'name':'AND/OR', 'options': ['AND','OR']},
+                \{'name':'yes/no', 'options': ['yes','no'], 'case': 'smart'},
+                \{'name':'true/false', 'options': ['true','false'], 'case': 'smart'},
+                \{'name':'and/or', 'options': ['and','or'], 'case': 'smart'},
                 \{'name':'Hello World', 'options': ['Hello World!','GoodBye Cruel World!' , 'See You Next Tuesday!']},
-                \{'name':'On/Off', 'options': ['On','Off']},
-                \{'name':'on/off', 'options': ['on','off']},
-                \{'name':'ON/OFF', 'options': ['ON','OFF']},
+                \{'name':'on/off', 'options': ['on','off'], 'case': 'smart'},
                 \{'name':'comparison_operator', 'options': ['<','<=','==', '>=', '>' , '=~', '!=']},
                 \{'name': 'datatype', 'options': ['bool', 'char','int','unsigned int', 'float','long', 'double']},
                 \{'name':'weekday', 'options': ['Sunday','Monday', 'Tuesday', 'Wednesday','Thursday', 'Friday', 'Saturday']},
